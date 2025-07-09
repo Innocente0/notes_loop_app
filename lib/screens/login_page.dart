@@ -1,3 +1,5 @@
+// lib/screens/login_page.dart
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -8,242 +10,204 @@ import '../bloc/auth_state.dart';
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
   @override
-  State<LoginPage> createState() => _LoginPageState();
+  _LoginPageState createState() => _LoginPageState();
 }
 
 class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
   final _emailC = TextEditingController();
   final _passC = TextEditingController();
-  bool _obscure = true;
-  bool _remember = false;
+  bool _obscure = true, _remember = false;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: BlocListener<AuthBloc, AuthState>(
-        listener: (context, state) {
+        listener: (ctx, state) {
           if (state is AuthSuccess) {
-            Navigator.pushReplacementNamed(context, '/home');
+            Navigator.pushReplacementNamed(ctx, '/home');
           } else if (state is AuthFailure) {
-            ScaffoldMessenger.of(context)
+            ScaffoldMessenger.of(ctx)
                 .showSnackBar(SnackBar(content: Text(state.error)));
           }
         },
-        child: Stack(
-          children: [
-            // Top pink bubble
-            Positioned(
-              top: -80,
-              right: -80,
+        child: Stack(children: [
+          // Top bubble
+          Positioned(
+            top: -80, right: -80,
+            child: Container(
+              width: 200, height: 200,
+              decoration: const BoxDecoration(
+                  color: Color(0xFFEA3C79), shape: BoxShape.circle),
+            ),
+          ),
+          // Bottom wave
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: ClipPath(
+              clipper: _WaveClipper(),
               child: Container(
-                width: 200,
-                height: 200,
-                decoration: const BoxDecoration(
-                  color: Color(0xFFEA3C79),
-                  shape: BoxShape.circle,
-                ),
+                height: 200, color: const Color(0xFFEA3C79),
               ),
             ),
-            // Bottom pink wave
-            Align(
-              alignment: Alignment.bottomCenter,
-              child: ClipPath(
-                clipper: _BottomWave(),
-                child: Container(
-                  height: 200,
-                  color: const Color(0xFFEA3C79),
-                ),
-              ),
-            ),
-
-            // Form content
-            SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 40),
-                      const Text(
-                        'Welcome Back',
+          ),
+          // Form
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 40),
+                    const Text('Welcome Back',
                         style: TextStyle(
-                          fontSize: 32,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
+                            fontSize: 32,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87)),
+                    const SizedBox(height: 4),
+                    const Text('Hey! Good to see you again',
+                        style: TextStyle(color: Colors.grey)),
+                    const SizedBox(height: 32),
+                    // Email
+                    TextFormField(
+                      controller: _emailC,
+                      validator: (v) => v!.contains('@') ? null : 'Invalid',
+                      decoration: InputDecoration(
+                        hintText: 'Email',
+                        prefixIcon: const Icon(Icons.email, color: Colors.grey),
+                        filled: true,
+                        fillColor: Colors.white,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(30),
+                          borderSide: BorderSide.none,
                         ),
                       ),
-                      const SizedBox(height: 4),
-                      const Text(
-                        'Hey! Good to see you again',
-                        style: TextStyle(color: Colors.grey),
-                      ),
-                      const SizedBox(height: 32),
-
-                      // Email field
-                      TextFormField(
-                        controller: _emailC,
-                        validator: (v) =>
-                        (v != null && v.contains('@')) ? null : 'Invalid email',
-                        decoration: InputDecoration(
-                          hintText: 'Email',
-                          prefixIcon: const Icon(Icons.email, color: Colors.grey),
-                          filled: true,
-                          fillColor: Colors.white,
-                          contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 20, vertical: 16),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(30),
-                            borderSide: BorderSide.none,
-                          ),
+                    ),
+                    const SizedBox(height: 16),
+                    // Password
+                    TextFormField(
+                      controller: _passC,
+                      obscureText: _obscure,
+                      validator: (v) => v!.length >= 6 ? null : 'Min 6 chars',
+                      decoration: InputDecoration(
+                        hintText: 'Password',
+                        prefixIcon: const Icon(Icons.lock, color: Colors.grey),
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                              _obscure ? Icons.visibility : Icons.visibility_off),
+                          onPressed: () =>
+                              setState(() => _obscure = !_obscure),
+                        ),
+                        filled: true,
+                        fillColor: Colors.white,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(30),
+                          borderSide: BorderSide.none,
                         ),
                       ),
-                      const SizedBox(height: 16),
-
-                      // Password field
-                      TextFormField(
-                        controller: _passC,
-                        obscureText: _obscure,
-                        validator: (v) =>
-                        (v != null && v.length >= 6) ? null : 'Min 6 chars',
-                        decoration: InputDecoration(
-                          hintText: 'Password',
-                          prefixIcon: const Icon(Icons.lock, color: Colors.grey),
-                          suffixIcon: IconButton(
-                            icon: Icon(
-                              _obscure ? Icons.visibility : Icons.visibility_off,
-                              color: Colors.grey,
-                            ),
-                            onPressed: () => setState(() => _obscure = !_obscure),
+                    ),
+                    const SizedBox(height: 8),
+                    // Remember / Forgot
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(children: [
+                          Checkbox(
+                            value: _remember,
+                            activeColor: const Color(0xFFEA3C79),
+                            onChanged: (v) =>
+                                setState(() => _remember = v!),
                           ),
-                          filled: true,
-                          fillColor: Colors.white,
-                          contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 20, vertical: 16),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(30),
-                            borderSide: BorderSide.none,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-
-                      // Remember me & forgot
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Row(children: [
-                            Checkbox(
-                              value: _remember,
-                              onChanged: (v) => setState(() => _remember = v!),
-                              activeColor: const Color(0xFFEA3C79),
-                            ),
-                            const Text('Remember me'),
-                          ]),
-                          TextButton(
-                            onPressed: () {},
-                            child: const Text('Forgot password?',
-                                style: TextStyle(color: Colors.grey)),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 24),
-
-                      // SIGN IN button
-                      BlocBuilder<AuthBloc, AuthState>(
-                        builder: (context, state) {
-                          return SizedBox(
-                            width: double.infinity,
-                            height: 50,
-                            child: ElevatedButton(
-                              onPressed: state is AuthLoading
-                                  ? null
-                                  : () {
-                                if (_formKey.currentState!.validate()) {
-                                  context.read<AuthBloc>().add(
-                                    LoginRequested(
-                                      _emailC.text.trim(),
-                                      _passC.text.trim(),
-                                    ),
-                                  );
-                                }
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.white,
-                                side: const BorderSide(
-                                    color: Color(0xFFEA3C79), width: 2),
-                                shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(30)),
-                              ),
-                              child: state is AuthLoading
-                                  ? const CircularProgressIndicator(
-                                  color: Color(0xFFEA3C79))
-                                  : const Text(
-                                'SIGN IN',
-                                style: TextStyle(
-                                    color: Color(0xFFEA3C79), fontSize: 16),
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Navigate to Sign Up
-                      Center(
-                        child: GestureDetector(
-                          onTap: () =>
-                              Navigator.pushReplacementNamed(context, '/signup'),
+                          const Text('Remember me')
+                        ]),
+                        TextButton(
+                          onPressed: () {},
                           child: const Text(
-                            "Don't have an account? Sign Up",
-                            style: TextStyle(
-                              color: Colors.black87,
-                              decoration: TextDecoration.underline,
-                            ),
+                            'Forgot password?',
+                            style: TextStyle(color: Colors.grey),
                           ),
                         ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    // SIGN IN
+                    BlocBuilder<AuthBloc, AuthState>(
+                      builder: (ctx, state) {
+                        return SizedBox(
+                          width: double.infinity,
+                          height: 50,
+                          child: ElevatedButton(
+                            onPressed: state is AuthLoading
+                                ? null
+                                : () {
+                              if (_formKey.currentState!.validate()) {
+                                ctx.read<AuthBloc>().add(
+                                  LoginRequested(
+                                    _emailC.text.trim(),
+                                    _passC.text.trim(),
+                                  ),
+                                );
+                              }
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              side: const BorderSide(
+                                  color: Color(0xFFEA3C79), width: 2),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(30)),
+                            ),
+                            child: state is AuthLoading
+                                ? const CircularProgressIndicator(
+                                color: Color(0xFFEA3C79))
+                                : const Text(
+                              'SIGN IN',
+                              style: TextStyle(
+                                  color: Color(0xFFEA3C79),
+                                  fontSize: 16),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    Center(
+                      child: GestureDetector(
+                        onTap: () =>
+                            Navigator.pushReplacementNamed(context, '/signup'),
+                        child: const Text(
+                          "Don't have an account? Sign Up",
+                          style: TextStyle(
+                              color: Colors.black87,
+                              decoration: TextDecoration.underline),
+                        ),
                       ),
-
-                      const Spacer(),
-
-                      // Social icons
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: const [
-                          Icon(Icons.alternate_email, color: Colors.white),
-                          SizedBox(width: 16),
-                          Icon(Icons.facebook, color: Colors.white),
-                          SizedBox(width: 16),
-                          Icon(Icons.mail, color: Colors.white),
-                        ],
-                      ),
-                      const SizedBox(height: 24),
-                    ],
-                  ),
+                    ),
+                    const Spacer(),
+                  ],
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+        ]),
       ),
     );
   }
 }
 
-class _BottomWave extends CustomClipper<Path> {
+class _WaveClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
     final p = Path();
-    p.lineTo(0, 50);
-    p.quadraticBezierTo(size.width * .5, 0, size.width, 50);
-    p.lineTo(size.width, size.height);
-    p.lineTo(0, size.height);
+    p.lineTo(0, size.height - 60);
+    p.quadraticBezierTo(
+        size.width / 2, size.height, size.width, size.height - 60);
+    p.lineTo(size.width, 0);
     p.close();
     return p;
   }
 
   @override
-  bool shouldReclip(covariant CustomClipper<Path> old) => false;
+  bool shouldReclip(CustomClipper<Path> old) => false;
 }

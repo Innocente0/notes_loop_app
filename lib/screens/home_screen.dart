@@ -1,3 +1,5 @@
+// lib/screens/home_screen.dart
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -8,19 +10,20 @@ import '../bloc/notes_state.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
-
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  _HomeScreenState createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  bool _hasLoaded = false;
+
   @override
-  void initState() {
-    super.initState();
-    // Trigger notes loading when screen is accessed
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_hasLoaded) {
       context.read<NotesBloc>().add(LoadNotes());
-    });
+      _hasLoaded = true;
+    }
   }
 
   @override
@@ -28,72 +31,66 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          // Top pink bubble
+          // Top bubble
           Positioned(
-            top: -60,
-            right: -60,
+            top: -60, right: -60,
             child: Container(
-              width: 160,
-              height: 160,
+              width: 160, height: 160,
               decoration: const BoxDecoration(
-                color: Color(0xFFEA3C79),
-                shape: BoxShape.circle,
-              ),
+                  color: Color(0xFFEA3C79), shape: BoxShape.circle),
             ),
           ),
-
-          // Bottom pink wave
+          // Bottom wave
           Align(
             alignment: Alignment.bottomCenter,
             child: ClipPath(
               clipper: _BottomWave(),
               child: Container(
-                height: 160,
-                color: const Color(0xFFEA3C79),
+                height: 160, color: const Color(0xFFEA3C79),
               ),
             ),
           ),
-
-          // Safe-area content
+          // Content
           SafeArea(
             child: Column(
               children: [
-                // ← Back arrow + “NOTES” title
+                // ← Back + title
                 Padding(
                   padding:
                   const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  child: Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(
-                          Icons.arrow_back,
-                          color: Colors.white,
-                        ),
-                        onPressed: () =>
-                            Navigator.pushReplacementNamed(context, '/login'),
+                  child: Row(children: [
+                    IconButton(
+                      icon: const Icon(Icons.arrow_back, color: Colors.white),
+                      onPressed: () =>
+                          Navigator.pushReplacementNamed(context, '/login'),
+                    ),
+                    const SizedBox(width: 8),
+                    const Text(
+                      'NOTES',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
                       ),
-                      const SizedBox(width: 8),
-                      const Text(
-                        'NOTES',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                    const Spacer(),
+                    IconButton(
+                      icon: const Icon(Icons.refresh, color: Colors.white),
+                      onPressed: () {
+                        context.read<NotesBloc>().add(LoadNotes());
+                      },
+                    ),
+                  ]),
                 ),
 
                 // Notes list
                 Expanded(
                   child: BlocBuilder<NotesBloc, NotesState>(
-                    builder: (context, state) {
+                    builder: (ctx, state) {
                       if (state is NotesLoading) {
                         return const Center(
                           child: CircularProgressIndicator(
-                            color: Color(0xFFEA3C79),
-                          ),
+                              color: Color(0xFFEA3C79)),
                         );
                       }
                       if (state is NotesError) {
@@ -101,91 +98,106 @@ class _HomeScreenState extends State<HomeScreen> {
                       }
                       if (state is NotesLoaded) {
                         final notes = state.notes;
+                        print('UI: Displaying ${notes.length} notes');
                         if (notes.isEmpty) {
-                          return const Center(child: Text('No notes yet.'));
-                        }
-                        return ListView.builder(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        itemCount: notes.length,
-                        itemBuilder: (ctx, i) {
-                          final note = notes[i];
-                          final ts = note['updatedAt'] as Timestamp?;
-                          final updated = ts != null
-                              ? ts.toDate().toString()
-                              : '––';
-                          final bg = [
-                            Colors.lightBlue.shade100,
-                            Colors.pink.shade100,
-                            Colors.yellow.shade100
-                          ][i % 3];
-
-                          return Card(
-                            color: bg,
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12)),
-                            margin: const EdgeInsets.symmetric(vertical: 8),
-                            child: ListTile(
-                              title: Text(
-                                note['text'] as String,
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.bold),
-                              ),
-                              subtitle: Text(
-                                'Edited: $updated',
-                                style: TextStyle(color: Colors.grey[700]),
-                              ),
-                              trailing: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  IconButton(
-                                    icon: const Icon(Icons.edit),
-                                    onPressed: () async {
-                                      final newText =
-                                      await showDialog<String>(
-                                        context: context,
-                                        builder: (_) =>
-                                            _EditDialog(initial: note['text']
-                                            as String),
-                                      );
-                                      if (newText != null) {
-                                        context.read<NotesBloc>().add(
-                                            UpdateNote(note['id'], newText));
-                                      }
-                                    },
-                                  ),
-                                  IconButton(
-                                    icon: const Icon(Icons.delete),
-                                    onPressed: () => context
-                                        .read<NotesBloc>()
-                                        .add(DeleteNote(note['id'])),
-                                  ),
-                                ],
-                              ),
+                          return const Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.note_add, size: 64, color: Colors.grey),
+                                SizedBox(height: 16),
+                                Text('No notes yet. Tap + to add one!'),
+                              ],
                             ),
                           );
-                        },
-                      );
+                        }
+                        return ListView.builder(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          itemCount: notes.length,
+                          itemBuilder: (iCtx, i) {
+                            final note = notes[i];
+                            final ts = note['updatedAt'] as Timestamp?;
+                            final updated = ts != null
+                                ? ts.toDate().toString()
+                                : '––';
+                            final bg = [
+                              Colors.lightBlue.shade100,
+                              Colors.pink.shade100,
+                              Colors.yellow.shade100
+                            ][i % 3];
+                            return Card(
+                              color: bg,
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12)),
+                              margin:
+                              const EdgeInsets.symmetric(vertical: 8),
+                              child: ListTile(
+                                title: Text(
+                                  note['text'] as String,
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.bold),
+                                ),
+                                subtitle: Text(
+                                  'Edited: $updated',
+                                  style:
+                                  TextStyle(color: Colors.grey[700]),
+                                ),
+                                trailing: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(Icons.edit),
+                                      onPressed: () async {
+                                        final newText =
+                                        await showDialog<String>(
+                                          context: context,
+                                          builder: (_) =>
+                                              _EditDialog(
+                                                  initial: note['text']
+                                                  as String),
+                                        );
+                                        if (newText != null) {
+                                          context.read<NotesBloc>().add(
+                                              UpdateNote(
+                                                  note['id'], newText));
+                                        }
+                                      },
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.delete),
+                                      onPressed: () => context
+                                          .read<NotesBloc>()
+                                          .add(DeleteNote(note['id'])),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        );
                       }
-                      return const Center(child: Text('Loading...'));
+                      print('UI: Unknown state: $state');
+                      return const Center(child: Text('Unknown state'));
                     },
                   ),
                 ),
 
-                // Floating Add button
+                // Add button
                 Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: FloatingActionButton(
                     backgroundColor: Colors.white,
-                    child: const Icon(Icons.add, color: Color(0xFFEA3C79)),
                     onPressed: () async {
                       final text = await showDialog<String>(
                         context: context,
-                        builder: (_) => const _EditDialog(initial: ''),
+                        builder: (_) =>
+                        const _EditDialog(initial: ''),
                       );
                       if (text != null && text.trim().isNotEmpty) {
-                        context.read<NotesBloc>().add(AddNote(text.trim()));
+                        context.read<NotesBloc>().add(AddNote(text));
                       }
                     },
+                    child: const Icon(Icons.add, color: Color(0xFFEA3C79)),
                   ),
                 ),
               ],
@@ -202,11 +214,11 @@ class _EditDialog extends StatefulWidget {
   const _EditDialog({required this.initial});
 
   @override
-  State<_EditDialog> createState() => __EditDialogState();
+  _EditDialogState createState() => _EditDialogState();
 }
 
-class __EditDialogState extends State<_EditDialog> {
-  late TextEditingController _c;
+class _EditDialogState extends State<_EditDialog> {
+  late final TextEditingController _c;
 
   @override
   void initState() {
@@ -217,12 +229,14 @@ class __EditDialogState extends State<_EditDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(widget.initial.isEmpty ? 'New Note' : 'Edit Note'),
+      title:
+      Text(widget.initial.isEmpty ? 'New Note' : 'Edit Note'),
       content: TextField(
         controller: _c,
         maxLines: null,
-        decoration: const InputDecoration(hintText: 'Enter note text'),
         autofocus: true,
+        decoration: const InputDecoration(
+            hintText: 'Enter note text'),
       ),
       actions: [
         TextButton(
@@ -232,8 +246,7 @@ class __EditDialogState extends State<_EditDialog> {
         ElevatedButton(
           onPressed: () => Navigator.pop(context, _c.text),
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFFEA3C79),
-          ),
+              backgroundColor: const Color(0xFFEA3C79)),
           child: const Text('Save'),
         ),
       ],
@@ -244,15 +257,15 @@ class __EditDialogState extends State<_EditDialog> {
 class _BottomWave extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
-    final p = Path()
+    return Path()
       ..lineTo(0, 30)
       ..quadraticBezierTo(size.width * .5, 0, size.width, 30)
       ..lineTo(size.width, size.height)
       ..lineTo(0, size.height)
       ..close();
-    return p;
   }
 
   @override
-  bool shouldReclip(covariant CustomClipper<Path> old) => false;
+  bool shouldReclip(covariant CustomClipper<Path> old) =>
+      false;
 }

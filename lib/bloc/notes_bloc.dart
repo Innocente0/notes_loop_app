@@ -14,16 +14,11 @@ class NotesBloc extends Bloc<NotesEvent, NotesState> {
     on<AddNote>(_onAddNote);
     on<UpdateNote>(_onUpdateNote);
     on<DeleteNote>(_onDeleteNote);
-
-    // load immediately
-    add(LoadNotes());
   }
 
   Future<void> _onLoadNotes(
       LoadNotes event, Emitter<NotesState> emit) async {
-    if (state is! NotesLoaded) {
-      emit(NotesLoading());
-    }
+    emit(NotesLoading());
     try {
       final notes = await _firestoreService.fetchNotes();
       emit(NotesLoaded(notes));

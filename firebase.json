@@ -1,1 +1,29 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"yuhaian","appId":"1:722131854046:android:2b8e9b35426896d8ce584f","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"yuhaian","configurations":{"android":"1:722131854046:android:2b8e9b35426896d8ce584f","web":"1:722131854046:web:9d48008fe21474ffce584f","windows":"1:722131854046:web:65e7e550f92d7526ce584f"}}}}}}
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "yuhaian",
+          "appId": "1:722131854046:android:2b8e9b35426896d8ce584f",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "yuhaian",
+          "configurations": {
+            "android": "1:722131854046:android:2b8e9b35426896d8ce584f",
+            "web": "1:722131854046:web:9d48008fe21474ffce584f",
+            "windows": "1:722131854046:web:65e7e550f92d7526ce584f"
+          }
+        }
+      }
+    }
+  },
+  "firestore": {
+    "database": "(default)",
+    "location": "africa-south1",
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  }
+}

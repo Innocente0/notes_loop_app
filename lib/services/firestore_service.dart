@@ -4,47 +4,54 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class FirestoreService {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final _notesRef = FirebaseFirestore.instance.collection('notes');
+  final _auth = FirebaseAuth.instance;
 
-  // Fetch all notes for current user
   Future<List<Map<String, dynamic>>> fetchNotes() async {
     final user = _auth.currentUser;
-    if (user == null) return [];
-
-    final snapshot = await _firestore
-        .collection('notes')
+    print('Current user: ${user?.uid}');
+    if (user == null) {
+      print('No user logged in');
+      return [];
+    }
+    
+    final snap = await _notesRef
         .where('userId', isEqualTo: user.uid)
         .orderBy('updatedAt', descending: true)
         .get();
-
-    return snapshot.docs
-        .map((doc) => {'id': doc.id, ...doc.data()})
+    
+    print('Found ${snap.docs.length} notes');
+    final notes = snap.docs
+        .map((doc) => {
+      'id': doc.id,
+      ...doc.data(),
+    })
         .toList();
+    print('Notes: $notes');
+    return notes;
   }
 
-  // Create a new note
   Future<void> addNote(String text) async {
     final user = _auth.currentUser;
     if (user == null) return;
-    await _firestore.collection('notes').add({
+    
+    print('Adding note: $text for user: ${user.uid}');
+    await _notesRef.add({
       'text': text,
       'userId': user.uid,
-      'createdAt': FieldValue.serverTimestamp(),
       'updatedAt': FieldValue.serverTimestamp(),
     });
+    print('Note added successfully');
   }
 
-  // Update an existing note
   Future<void> updateNote(String id, String text) async {
-    await _firestore.collection('notes').doc(id).update({
+    await _notesRef.doc(id).update({
       'text': text,
       'updatedAt': FieldValue.serverTimestamp(),
     });
   }
 
-  // Delete a note
   Future<void> deleteNote(String id) async {
-    await _firestore.collection('notes').doc(id).delete();
+    await _notesRef.doc(id).delete();
   }
 }
