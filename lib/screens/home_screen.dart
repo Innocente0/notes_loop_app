@@ -6,8 +6,22 @@ import '../bloc/notes_bloc.dart';
 import '../bloc/notes_event.dart';
 import '../bloc/notes_state.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Trigger notes loading when screen is accessed
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<NotesBloc>().add(LoadNotes());
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -85,11 +99,12 @@ class HomeScreen extends StatelessWidget {
                       if (state is NotesError) {
                         return Center(child: Text('Error: ${state.message}'));
                       }
-                      final notes = (state as NotesLoaded).notes;
-                      if (notes.isEmpty) {
-                        return const Center(child: Text('No notes yet.'));
-                      }
-                      return ListView.builder(
+                      if (state is NotesLoaded) {
+                        final notes = state.notes;
+                        if (notes.isEmpty) {
+                          return const Center(child: Text('No notes yet.'));
+                        }
+                        return ListView.builder(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         itemCount: notes.length,
                         itemBuilder: (ctx, i) {
@@ -150,6 +165,8 @@ class HomeScreen extends StatelessWidget {
                           );
                         },
                       );
+                      }
+                      return const Center(child: Text('Loading...'));
                     },
                   ),
                 ),

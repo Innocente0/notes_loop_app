@@ -1,21 +1,21 @@
 {
   "project_info": {
-    "project_number": "260017866209",
-    "project_id": "notesapp-a9439",
-    "storage_bucket": "notesapp-a9439.firebasestorage.app"
+    "project_number": "722131854046",
+    "project_id": "yuhaian",
+    "storage_bucket": "yuhaian.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:260017866209:android:c4984aabd4390320f0fea0",
+        "mobilesdk_app_id": "1:722131854046:android:2b8e9b35426896d8ce584f",
         "android_client_info": {
-          "package_name": "com.comapany.notesapp"
+          "package_name": "com.example.notes_app"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyCHz6-0q6DEzGSxo37wHMX5KLNltijdPjQ"
+          "current_key": "AIzaSyA20BuJkhET0QFUsy_X5kecXbYnP-ERYfs"
         }
       ],
       "services": {

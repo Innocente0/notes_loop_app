@@ -21,7 +21,9 @@ class NotesBloc extends Bloc<NotesEvent, NotesState> {
 
   Future<void> _onLoadNotes(
       LoadNotes event, Emitter<NotesState> emit) async {
-    emit(NotesLoading());
+    if (state is! NotesLoaded) {
+      emit(NotesLoading());
+    }
     try {
       final notes = await _firestoreService.fetchNotes();
       emit(NotesLoaded(notes));
